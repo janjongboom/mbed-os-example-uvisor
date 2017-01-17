@@ -17,6 +17,7 @@
 #include "uvisor-lib/uvisor-lib.h"
 #include "mbed.h"
 #include "main-hw.h"
+#include "led.h"
 
 /* Create ACLs for main box. */
 MAIN_ACL(g_main_acl);
@@ -35,7 +36,7 @@ int main(void)
 
     while (1)
     {
-        printf("Main loop count: %d\r\n", count++);
+        printf("Main loop count: %d, led value is: %d\r\n", count++, secure_led_get_value());
         led1 = !led1;
 
         /* blink once per second */

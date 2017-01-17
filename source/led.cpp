@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "led.h"
 #include "uvisor-lib/uvisor-lib.h"
 #include "mbed.h"
 #include "main-hw.h"
@@ -22,17 +23,27 @@ typedef struct {
     InterruptIn * sw;
     DigitalOut * led;
     RawSerial * pc;
+    int caller_id;
+    Thread * rpc_thread;
 } my_box_context;
 
 static const UvisorBoxAclItem acl[] = {
 };
 
 static void my_box_main(const void *);
+static bool get_value(void);
 
 UVISOR_BOX_NAMESPACE(NULL);
 UVISOR_BOX_HEAPSIZE(8192);
 UVISOR_BOX_MAIN(my_box_main, osPriorityNormal, UVISOR_BOX_STACK_SIZE);
 UVISOR_BOX_CONFIG(my_box, acl, UVISOR_BOX_STACK_SIZE, my_box_context);
+
+UVISOR_BOX_RPC_GATEWAY_SYNC (my_box, secure_led_get_value, get_value, bool, void);
+
+static bool get_value(void)
+{
+    return *uvisor_ctx->led;
+}
 
 static void my_box_switch_irq(void)
 {
@@ -41,19 +52,43 @@ static void my_box_switch_irq(void)
 
     /* print LED state on serial port */
     uvisor_ctx->pc->printf(
-        "\nPressed SW2, printing from interrupt - LED changed to %i\n\n",
+        "\nPressed SW2, printing from interrupt - LED changed to %i\r\n\r\n",
         (int)(*uvisor_ctx->led));
+}
+
+static void listen_for_rpc()
+{
+    uvisor_ctx->pc->printf("listen_for_rpc\r\n");
+
+    static const TFN_Ptr my_fn_array[] = {
+        (TFN_Ptr) get_value
+    };
+
+    while (1) {
+        int status;
+
+        /* NOTE: This serializes all access to the number store! */
+        status = rpc_fncall_waitfor(my_fn_array, 1, &uvisor_ctx->caller_id, UVISOR_WAIT_FOREVER);
+
+        if (status) {
+            uvisor_ctx->pc->printf("Failure is not an option.\r\n");
+            uvisor_error(USER_NOT_ALLOWED);
+        }
+    }
 }
 
 static void my_box_main(const void *)
 {
     /* allocate serial port to ensure that code in this secure box
      * won't touch handle in the default security context when printing */
-    RawSerial *pc;    
+    RawSerial *pc;
     if(!(pc = new RawSerial(USBTX, USBRX)))
         return;
     /* remember serial driver for IRQ routine */
     uvisor_ctx->pc = pc;
+
+    uvisor_ctx->rpc_thread = new Thread(osPriorityNormal);
+    uvisor_ctx->rpc_thread->start(&listen_for_rpc);
 
     /* allocate a box-specific LED */
     if(!(uvisor_ctx->led = new DigitalOut(SECURE_LED)))
