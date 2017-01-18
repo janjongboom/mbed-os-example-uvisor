@@ -226,9 +226,10 @@ uint32_t AKA_Profile_Derive_Wrapping_Key(uint8_t *buf_p, uint32_t buf_len,
   printf("C1 after reading ECC point from buffer: %d bytes\r\n", sizeof(C1));
   PrintBuffer((uint8_t*)&C1, sizeof(C1));
 
+
 #ifndef FEATURE_UVISOR
   // So without uvisor we got ~170K of heap space. Fill it up, so we have an equal playing field.
-  p = calloc(160000, 1);
+  p = calloc(172416 - 2048, 1);
   printf("calloc a lot %p\r\n", p);
 #endif
 
@@ -247,7 +248,7 @@ uint32_t AKA_Profile_Derive_Wrapping_Key(uint8_t *buf_p, uint32_t buf_len,
     errcode = AKA_PROFILE_ECC_ERROR;
     goto ERROR;
   }
-  printf("V after mbedtls_ecp_mul: %d bytes\r\n", sizeof(V));
+  printf("[OK] V after mbedtls_ecp_mul: %d bytes\r\n", sizeof(V));
   PrintBuffer((uint8_t*)&V, sizeof(V));
 
   /*

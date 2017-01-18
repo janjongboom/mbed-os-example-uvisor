@@ -28,7 +28,6 @@ MAIN_ACL(g_main_acl);
 
 /* Enable uVisor. */
 UVISOR_SET_MODE_ACL(UVISOR_ENABLED, g_main_acl);
-UVISOR_SET_PAGE_HEAP(8*1024, 5);
 #endif
 
 int main(void)
@@ -47,9 +46,9 @@ int main(void)
     while (1)
     {
 #ifdef FEATURE_UVISOR
-        printf("Main loop count: %d, led value is: %d\r\n", count++, secure_led_get_value());
+        // printf("Main loop count: %d, led value is: %d\r\n", count++, secure_led_get_value());
 #else
-        printf("Main loop count: %d\r\n", count++);
+        // printf("Main loop count: %d\r\n", count++);
 #endif
 
         led1 = !led1;

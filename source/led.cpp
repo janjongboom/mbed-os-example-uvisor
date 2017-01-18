@@ -39,11 +39,13 @@ static void my_box_main(const void *);
 static bool get_value(void);
 
 UVISOR_BOX_NAMESPACE(NULL);
-UVISOR_BOX_HEAPSIZE(8192 * 2);
+UVISOR_BOX_HEAPSIZE(8192 * 2.5);
 UVISOR_BOX_MAIN(my_box_main, osPriorityNormal, UVISOR_BOX_STACK_SIZE);
 UVISOR_BOX_CONFIG(my_box, acl, UVISOR_BOX_STACK_SIZE, my_box_context);
 
 UVISOR_BOX_RPC_GATEWAY_SYNC (my_box, secure_led_get_value, get_value, bool, void);
+
+RawSerial *pc;
 
 static bool get_value(void)
 {
@@ -131,7 +133,6 @@ static void my_box_main(const void *)
 
     /* allocate serial port to ensure that code in this secure box
      * won't touch handle in the default security context when printing */
-    RawSerial *pc;
     if(!(pc = new RawSerial(USBTX, USBRX)))
         return;
     /* remember serial driver for IRQ routine */
