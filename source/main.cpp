@@ -14,17 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef FEATURE_UVISOR
 #include "uvisor-lib/uvisor-lib.h"
+#endif
+
 #include "mbed.h"
 #include "main-hw.h"
 #include "led.h"
 
+#ifdef FEATURE_UVISOR
 /* Create ACLs for main box. */
 MAIN_ACL(g_main_acl);
 
 /* Enable uVisor. */
 UVISOR_SET_MODE_ACL(UVISOR_ENABLED, g_main_acl);
 UVISOR_SET_PAGE_HEAP(8*1024, 5);
+#endif
 
 int main(void)
 {
@@ -32,11 +37,21 @@ int main(void)
 
     printf("\r\n***** IRQ blinky uvisor-rtos example *****\r\n");
 
+#ifndef FEATURE_UVISOR
+    Thread t(osPriorityNormal, DEFAULT_STACK_SIZE);
+    t.start(&do_key_derivation);
+#endif
+
     size_t count = 0;
 
     while (1)
     {
+#ifdef FEATURE_UVISOR
         printf("Main loop count: %d, led value is: %d\r\n", count++, secure_led_get_value());
+#else
+        printf("Main loop count: %d\r\n", count++);
+#endif
+
         led1 = !led1;
 
         /* blink once per second */

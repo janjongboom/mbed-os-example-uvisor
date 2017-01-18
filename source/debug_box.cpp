@@ -1,3 +1,4 @@
+#ifdef FEATURE_UVISOR
 #include "mbed.h"
 #include "uvisor-lib/uvisor-lib.h"
 
@@ -36,3 +37,4 @@ static void box_debug_main(const void *)
     /* Register the debug box with uVisor. */
     uvisor_debug_init(&driver);
 }
+#endif
